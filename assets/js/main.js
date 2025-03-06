@@ -1,47 +1,63 @@
-const pokemonList = document.getElementById('pokemonList')
-const loadMoreButton = document.getElementById('loadMoreButton')
-
-const maxRecords = 151
-const limit = 10
+const pokemonList = document.getElementById('pokemonList');
+const loadMoreButton = document.getElementById('loadMoreButton');
+const limit = 10;
 let offset = 0;
 
-function convertPokemonToLi(pokemon) {
-    return `
-        <li class="pokemon ${pokemon.type}">
-            <span class="number">#${pokemon.number}</span>
-            <span class="name">${pokemon.name}</span>
+function createPokemonElement(pokemon) {
+    const li = document.createElement('li');
+    li.classList.add('pokemon', pokemon.type);
+    li.onclick = () => goToDetails(pokemon.number);
 
-            <div class="detail">
-                <ol class="types">
-                    ${pokemon.types.map((type) => `<li class="type ${type}">${type}</li>`).join('')}
-                </ol>
+    const numberSpan = document.createElement('span');
+    numberSpan.classList.add('number');
+    numberSpan.textContent = `#${pokemon.number}`;
+    
+    const nameSpan = document.createElement('span');
+    nameSpan.classList.add('name');
+    nameSpan.textContent = pokemon.name;
 
-                <img src="${pokemon.photo}"
-                     alt="${pokemon.name}">
-            </div>
-        </li>
-    `
+    const detailDiv = document.createElement('div');
+    detailDiv.classList.add('detail');
+
+    const typesOl = document.createElement('ol');
+    typesOl.classList.add('types');
+    pokemon.types.forEach(type => {
+        const liType = document.createElement('li');
+        liType.classList.add('type', type);
+        liType.textContent = type;
+        typesOl.appendChild(liType);
+    });
+
+    const img = document.createElement('img');
+    img.src = pokemon.photo;
+    img.alt = pokemon.name;
+
+    detailDiv.appendChild(typesOl);
+    detailDiv.appendChild(img);
+
+    li.appendChild(numberSpan);
+    li.appendChild(nameSpan);
+    li.appendChild(detailDiv);
+
+    return li;
 }
 
-function loadPokemonItens(offset, limit) {
-    pokeApi.getPokemons(offset, limit).then((pokemons = []) => {
-        const newHtml = pokemons.map(convertPokemonToLi).join('')
-        pokemonList.innerHTML += newHtml
-    })
+function loadPokemonItems(offset, limit) {
+    pokeApi.getPokemons(offset, limit).then(pokemons => {
+        pokemons.forEach(pokemon => {
+            pokemonList.appendChild(createPokemonElement(pokemon));
+        });
+    });
 }
 
-loadPokemonItens(offset, limit)
+loadPokemonItems(offset, limit);
 
 loadMoreButton.addEventListener('click', () => {
-    offset += limit
-    const qtdRecordsWithNexPage = offset + limit
+    offset += limit;
+    loadPokemonItems(offset, limit);
+});
 
-    if (qtdRecordsWithNexPage >= maxRecords) {
-        const newLimit = maxRecords - offset
-        loadPokemonItens(offset, newLimit)
-
-        loadMoreButton.parentElement.removeChild(loadMoreButton)
-    } else {
-        loadPokemonItens(offset, limit)
-    }
-})
+// Open stats page
+function goToDetails(pokemonId) {
+    window.location.href = `stats.html?id=${pokemonId}`;
+}
